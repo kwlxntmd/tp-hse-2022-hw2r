@@ -1,0 +1,53 @@
+name: unittest_telegram
+
+on: [push, workflow_dispatch]
+  
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Run min test
+        id: min
+        continue-on-error: true
+        run: python -m unittest tests.test_main.MyTestCase.test_min
+      - name: Run max test
+        id: max
+        continue-on-error: true
+        run: python -m unittest tests.test_main.MyTestCase.test_max
+      - name: Run sum test
+        id: sum
+        continue-on-error: true
+        run: python -m unittest tests.test_main.MyTestCase.test_sum
+      - name: Run mult test
+        id: mult
+        continue-on-error: true
+        run: python -m unittest tests.test_main.MyTestCase.test_mult
+      - name: Run tuple_of_numbers test
+        id: tuple_of_numbers
+        continue-on-error: true
+        run: python -m unittest tests.test_main.MyTestCase.test_tuple_of_numbers
+        
+      - name: Send report   
+        if: ${{ always() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ${{ github.actor }} created commit:
+            Commit message: ${{ github.event.commits[0].message }}
+            Repository: ${{ github.repository }}
+            
+            Unittest result:
+                Function min test: ${{ steps.min.outcome }}
+                Function max test: ${{ steps.max.outcome }}
+                Function sum test: ${{ steps.sum.outcome }}
+                Function mult test: ${{ steps.mult.outcome }}
+                Function tuple_of_numbers test: ${{ steps.tuple_of_numbers.outcome }}
+            
+            See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
